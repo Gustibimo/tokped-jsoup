@@ -17,21 +17,19 @@ class ScrapperImpl: Scrapper {
         val writer = Files.newBufferedWriter(Paths.get(csvPath))
         val csvPrinter = CSVPrinter(writer, CSVFormat.DEFAULT
             .withHeader("Product Name", "Descriptions", "Price", "imageLink"))
-//        try {
-//            val doc = Jsoup
-//                .connect("https://www.tokopedia.com/coppersurabaya/copper-cp1008-charger-single-port-up-to-20watt-qc-3-0-fast-charging")
-//                .get()
-//            println(doc.title())
-//        } catch (e: IOException){
-//            logger.error("Error when get the url {}", e.message)
-//        }
+        csvPrinter.flush()
 
-        getListProductUrl(tokpedHPUrl).parallelStream().map {
+        getListProductUrl(tokpedHPUrl)
+            .parallelStream()
+            .map {
             getProductAttr(it)
-        }.forEach {
-            saveToCsv(it).flush()
-            println(it)
         }
+            .forEach {
+            saveToCsv(it).flush()
+//            logger.info("saving $it to csv")
+            println("saving to csv for product:  $it")
+        }
+        csvPrinter.close()
 
     }
 
@@ -39,9 +37,9 @@ class ScrapperImpl: Scrapper {
         val urlList = mutableListOf<String>()
         val cssQuery = ".css-1dq1dix a"
 
-        for (pageNumber in 1..3){
+        for (pageNumber in 1..20){
             println(pageNumber)
-            val  res = Jsoup.connect("$url?page=$pageNumber").get()
+            val  res = Jsoup.connect("$url?page=$pageNumber").timeout(9000000).get()
             res.select(cssQuery)
                 .map { col -> col.attr("href") }
                 .parallelStream()
@@ -50,27 +48,28 @@ class ScrapperImpl: Scrapper {
                 }
         }
 
-        return urlList.subList(0,3)
+        println(urlList.size)
+        return urlList.subList(0,100)
 
     }
 
     private fun getProductAttr(url: String): Products {
 
-        val  res = Jsoup.connect(url).get()
+        val  res = Jsoup.connect(url).timeout(9000000).get()
 
         val productName = res.select(".css-1wtrxts").text().replace(",", " ")
         val productDetails = res.select(".css-168ydy0").text().replace(",", " ")
         val price = res.select(".css-aqsd8m .price").text().substring(2)
-        val merchant = res.select(".css-1vh65tm div")
+        val merchant = res.select("#pdp_comp-shop_credibility")
         val imageLink = res.select(".css-1b60o1a img").attr("src")
-        val ratingAttr = "lblPDPDetailProductRatingNumber"
+        val ratingAttr = res.getElementsByAttributeValue("data-testid", "lblPDPDetailProductRatingNumber")
+
 
         val products = Products()
         products.name = productName
         products.description = productDetails
         products.price = price
         products.imageLink = imageLink
-
 
         return products
     }
