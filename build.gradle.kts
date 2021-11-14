@@ -14,6 +14,9 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("org.jsoup:jsoup:1.14.3")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.0.8")
+    implementation("org.apache.commons:commons-csv:1.1")
 }
 
 tasks.test {
