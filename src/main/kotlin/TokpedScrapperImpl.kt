@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
-class ScrapperImpl: Scrapper {
+class TokpedScrapperImpl: Scrapper {
 
     private val tokpedHPUrl = "https://www.tokopedia.com/p/handphone-tablet/handphone"
 
@@ -39,7 +39,11 @@ class ScrapperImpl: Scrapper {
 
         for (pageNumber in 1..20){
             println(pageNumber)
-            val  res = Jsoup.connect("$url?page=$pageNumber").timeout(9000000).get()
+            val  res = Jsoup
+                .connect("$url?page=$pageNumber")
+                .userAgent("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36")
+                .timeout(9000000)
+                .get()
             res.select(cssQuery)
                 .map { col -> col.attr("href") }
                 .parallelStream()
@@ -55,7 +59,10 @@ class ScrapperImpl: Scrapper {
 
     private fun getProductAttr(url: String): Products {
 
-        val  res = Jsoup.connect(url).timeout(9000000).get()
+        val  res = Jsoup.connect(url)
+            .userAgent("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36")
+            .timeout(9000000)
+            .get()
 
         val productName = res.select(".css-1wtrxts").text().replace(",", " ")
         val productDetails = res.select(".css-168ydy0").text().replace(",", " ")
